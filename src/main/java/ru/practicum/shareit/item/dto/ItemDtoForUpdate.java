@@ -3,17 +3,11 @@ package ru.practicum.shareit.item.dto;
 import lombok.Builder;
 import lombok.Value;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-
 @Value
 @Builder
-public class ItemDto {
+public class ItemDtoForUpdate {
     private Long id;
-    @NotBlank
     private String name;
-    @NotBlank
     private String description;
-    @NotNull
     private Boolean available;
 }
