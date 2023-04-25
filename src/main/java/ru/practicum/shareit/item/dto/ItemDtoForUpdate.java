@@ -6,8 +6,8 @@ import lombok.Value;
 @Value
 @Builder
 public class ItemDtoForUpdate {
-    private Long id;
-    private String name;
-    private String description;
-    private Boolean available;
+    Long id;
+    String name;
+    String description;
+    Boolean available;
 }

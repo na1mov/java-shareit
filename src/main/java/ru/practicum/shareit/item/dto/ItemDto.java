@@ -9,11 +9,11 @@ import javax.validation.constraints.NotNull;
 @Value
 @Builder
 public class ItemDto {
-    private Long id;
+    Long id;
     @NotBlank
-    private String name;
+    String name;
     @NotBlank
-    private String description;
+    String description;
     @NotNull
-    private Boolean available;
+    Boolean available;
 }

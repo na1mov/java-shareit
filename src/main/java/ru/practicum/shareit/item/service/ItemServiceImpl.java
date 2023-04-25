@@ -6,12 +6,12 @@ import org.springframework.stereotype.Service;
 
 import ru.practicum.shareit.exception.model.NotFoundException;
 import ru.practicum.shareit.exception.model.WrongUserIdException;
-import ru.practicum.shareit.item.ItemMapper;
+import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemDtoForUpdate;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
-import ru.practicum.shareit.user.UserMapper;
+import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.service.UserService;
 
 import java.util.List;
@@ -24,13 +24,15 @@ import java.util.stream.Collectors;
 public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
     private final UserService userService;
+    private final ItemMapper itemMapper;
+    private final UserMapper userMapper;
 
     @Override
     public ItemDto save(Long userId, ItemDto itemDto) {
         log.info("Сохранение новой вещи");
-        Item item = ItemMapper.toItem(itemDto);
-        item.setOwner(UserMapper.toUser(userService.findById(userId)));
-        return ItemMapper.toItemDto(itemRepository.save(item));
+        Item item = itemMapper.itemDtoToItem(itemDto);
+        item.setOwner(userMapper.userDtoToUser(userService.findById(userId)));
+        return itemMapper.itemToItemDto(itemRepository.save(item));
     }
 
     @Override
@@ -55,12 +57,13 @@ public class ItemServiceImpl implements ItemService {
             itemForUpdate.setAvailable(itemDtoForUpdate.getAvailable());
         }
 
-        return ItemMapper.toItemDto(itemRepository.update(itemForUpdate));
+        return itemMapper.itemToItemDto(itemRepository.update(itemForUpdate));
     }
 
     @Override
     public void delete(Long itemId) {
         log.info(String.format("Удаление вещи с ID:%d", itemId));
+        findById(itemId);   // проверка на наличие вещи с таким ID в базе
         itemRepository.delete(itemId);
     }
 
@@ -69,14 +72,14 @@ public class ItemServiceImpl implements ItemService {
         log.info(String.format("Поиск вещи с ID:%d", itemId));
         Item item = itemRepository.findById(itemId).orElseThrow(() ->
                 new NotFoundException(String.format("Вещи с ID:%d нет в базе", itemId)));
-        return ItemMapper.toItemDto(item);
+        return itemMapper.itemToItemDto(item);
     }
 
     @Override
     public List<ItemDto> findByUserId(Long userId) {
         log.info(String.format("Поиск всех вещей пользователя с ID:%d", userId));
         return itemRepository.findByUserId(userId).stream()
-                .map(ItemMapper::toItemDto)
+                .map(itemMapper::itemToItemDto)
                 .collect(Collectors.toList());
     }
 
@@ -84,7 +87,7 @@ public class ItemServiceImpl implements ItemService {
     public List<ItemDto> findByWord(String word) {
         log.info(String.format("Поиск вещи по запросу:%s", word));
         return itemRepository.findByWord(word).stream()
-                .map(ItemMapper::toItemDto)
+                .map(itemMapper::itemToItemDto)
                 .collect(Collectors.toList());
     }
 

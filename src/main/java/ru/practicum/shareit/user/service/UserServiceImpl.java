@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.model.NotFoundException;
 import ru.practicum.shareit.exception.model.NotUniqueEmailException;
-import ru.practicum.shareit.user.UserMapper;
+import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.dto.UserDtoForUpdate;
 import ru.practicum.shareit.user.model.User;
@@ -19,13 +19,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     @Override
     public UserDto save(UserDto userDto) {
         log.info("Сохранение пользователя.");
-        User user = UserMapper.toUser(userDto);
+        User user = userMapper.userDtoToUser(userDto);
         emailCheck(user.getEmail());
-        return UserMapper.toUserDto(userRepository.save(user));
+        return userMapper.userToUserDto(userRepository.save(user));
     }
 
     @Override
@@ -43,12 +44,13 @@ public class UserServiceImpl implements UserService {
             userForUpdate.setName(userDtoForUpdate.getName());
         }
 
-        return UserMapper.toUserDto(userRepository.update(userForUpdate));
+        return userMapper.userToUserDto(userRepository.update(userForUpdate));
     }
 
     @Override
     public void delete(Long userId) {
         log.info(String.format("Удаление пользователя c ID:%d", userId));
+        findById(userId);   // проверка на наличие пользователя с таким ID в базе
         userRepository.delete(userId);
     }
 
@@ -57,14 +59,14 @@ public class UserServiceImpl implements UserService {
         log.info(String.format("Поиск пользователя c ID:%d", userId));
         User user = userRepository.findById(userId).orElseThrow(()
                 -> new NotFoundException(String.format("Пользователя с ID:%d нет в базе", userId)));
-        return UserMapper.toUserDto(user);
+        return userMapper.userToUserDto(user);
     }
 
     @Override
     public List<UserDto> findAll() {
         log.info("Поиск всех пользователей.");
         return userRepository.findAll().stream()
-                .map(UserMapper::toUserDto)
+                .map(userMapper::userToUserDto)
                 .collect(Collectors.toList());
     }
 
