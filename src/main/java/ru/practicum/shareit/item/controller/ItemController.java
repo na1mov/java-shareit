@@ -2,7 +2,9 @@ package ru.practicum.shareit.item.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemDtoEnhanced;
 import ru.practicum.shareit.item.dto.ItemDtoForUpdate;
 import ru.practicum.shareit.item.service.ItemService;
 
@@ -34,17 +36,23 @@ public class ItemController {
     }
 
     @GetMapping("/{itemId}")
-    public ItemDto findByItemId(@PathVariable long itemId) {
-        return itemService.findById(itemId);
+    public ItemDtoEnhanced findByItemId(@PathVariable long itemId, @RequestHeader("X-Sharer-User-Id") long userId) {
+        return itemService.findById(itemId, userId);
     }
 
     @GetMapping
-    public List<ItemDto> findByUserId(@RequestHeader(name = "X-Sharer-User-Id") long userId) {
+    public List<ItemDtoEnhanced> findByUserId(@RequestHeader(name = "X-Sharer-User-Id") long userId) {
         return itemService.findByUserId(userId);
     }
 
     @GetMapping("/search")
     public List<ItemDto> findByWord(@RequestParam(required = false) String text) {
         return itemService.findByWord(text);
+    }
+
+    @PostMapping("/{itemId}/comment")
+    public CommentDto createComment(@Valid @RequestBody CommentDto comment,
+                                    @RequestHeader("X-Sharer-User-Id") long userId, @PathVariable long itemId) {
+        return itemService.saveComment(comment, userId, itemId);
     }
 }
