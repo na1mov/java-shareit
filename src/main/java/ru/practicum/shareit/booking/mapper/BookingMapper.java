@@ -11,17 +11,7 @@ import ru.practicum.shareit.user.model.User;
 
 @Mapper(componentModel = "spring")
 public interface BookingMapper {
-    Booking bookingDtoToBooking(BookingDto bookingDto);
-
     BookingDto bookingToBookingDto(Booking booking);
 
     Booking bookingRequestToBooking(BookingRequest bookingRequest);
-
-    Item itemDtoToItem(ItemDto itemDto);
-
-    ItemDto itemToItemDto(Item item);
-
-    User userDtoToUser(UserDto userDto);
-
-    UserDto userToUserDto(User user);
 }
