@@ -188,8 +188,7 @@ public class ItemServiceImpl implements ItemService {
         Optional<BookingDtoShort> bookingDtoShort = Optional.empty();
         if (itemIdToListBooking.containsKey(itemDtoEnhancedId)) {
             bookingDtoShort = itemIdToListBooking.get(itemDtoEnhancedId).stream()
-                    .map(BookingMapperShort::bookingToBookingDtoShort)
-                    .findFirst();
+                    .map(BookingMapperShort::bookingToBookingDtoShort).findFirst();
         }
         return bookingDtoShort.orElse(null);
     }
@@ -197,8 +196,7 @@ public class ItemServiceImpl implements ItemService {
     private List<CommentDto> getCommentDto(Long itemDtoEnhancedId, Map<Long, List<Comment>> itemIdToListComments) {
         if (itemIdToListComments.containsKey(itemDtoEnhancedId)) {
             return itemIdToListComments.getOrDefault(itemDtoEnhancedId, null).stream()
-                    .map(CommentMapper::commentToCommentDto)
-                    .collect(Collectors.toList());
+                    .map(CommentMapper::commentToCommentDto).collect(Collectors.toList());
         }
         return new ArrayList<>();
     }
