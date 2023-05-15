@@ -123,6 +123,26 @@ class BookingServiceImplTest {
     }
 
     @Test
+    void updateThrowsMyValidationIfWrongStatus() {
+        User userOne = new User(1L, "testNameOne", "testEmailOne@gmail.com");
+        User userTwo = new User(2L, "testNameTwo", "testEmailTwo@gmail.com");
+        Item item = new Item(1L, "itemName", "itemDescription", true, userOne, null);
+        Booking booking = Booking.builder()
+                .id(item.getId())
+                .start(LocalDateTime.now().plusMinutes(8))
+                .end(LocalDateTime.now().plusMinutes(16))
+                .item(item)
+                .booker(userTwo)
+                .status(BookingStatus.REJECTED)
+                .build();
+
+        when(bookingRepository.findById(any())).thenReturn(Optional.of(booking));
+        when(bookingRepository.save(any())).thenReturn(booking);
+
+        assertThrows(MyValidationException.class, () -> bookingService.update(1L, userOne.getId(), true));
+    }
+
+    @Test
     void updateThrowsMyValidationIfStatusIsWrong() {
         User userOne = new User(1L, "testNameOne", "testEmailOne@gmail.com");
         User userTwo = new User(2L, "testNameTwo", "testEmailTwo@gmail.com");

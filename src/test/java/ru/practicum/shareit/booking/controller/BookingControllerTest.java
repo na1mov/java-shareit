@@ -14,6 +14,9 @@ import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingRequest;
 import ru.practicum.shareit.booking.model.BookingStatus;
 import ru.practicum.shareit.booking.service.BookingService;
+import ru.practicum.shareit.exception.model.ErrorResponse;
+import ru.practicum.shareit.exception.model.MyValidationException;
+import ru.practicum.shareit.exception.model.NotFoundException;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
@@ -95,6 +98,61 @@ class BookingControllerTest {
                         .param("approved", "true")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
+    }
+
+    @SneakyThrows
+    @Test
+    void updateThrowsMyValidationIfWrongStatus() {
+        BookingDto bookingDtoUpd = BookingDto.builder()
+                .id(item.getId())
+                .start(LocalDateTime.now().plusMinutes(8))
+                .end(LocalDateTime.now().plusMinutes(16))
+                .item(item)
+                .booker(userTwo)
+                .status(BookingStatus.APPROVED)
+                .build();
+        ErrorResponse errorResponse = new ErrorResponse("Ошибка изменения статуса.");
+
+        when(bookingService.update(anyLong(), anyLong(), any()))
+                .thenThrow(new MyValidationException("Ошибка изменения статуса."));
+
+        mockMvc.perform(MockMvcRequestBuilders.patch("/bookings/1")
+                        .header("X-Sharer-User-Id", 1L)
+                        .content(mapper.writeValueAsString(bookingDtoUpd))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("approved", "true")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is(errorResponse.getError()), String.class));
+    }
+
+    @SneakyThrows
+    @Test
+    void updateThrowsNotFoundIfWrongOwner() {
+        BookingDto bookingDtoUpd = BookingDto.builder()
+                .id(item.getId())
+                .start(LocalDateTime.now().plusMinutes(8))
+                .end(LocalDateTime.now().plusMinutes(16))
+                .item(item)
+                .booker(userOne)
+                .status(BookingStatus.WAITING)
+                .build();
+        ErrorResponse errorResponse = new ErrorResponse(String
+                .format("Ошибка доступа. Изменить статус вещи с ID:%d может только её владелец.", bookingDto.getId()));
+
+        when(bookingService.update(anyLong(), anyLong(), any())).thenThrow(new NotFoundException(String
+                .format("Ошибка доступа. Изменить статус вещи с ID:%d может только её владелец.", bookingDto.getId())));
+
+        mockMvc.perform(MockMvcRequestBuilders.patch("/bookings/1")
+                        .header("X-Sharer-User-Id", 1L)
+                        .content(mapper.writeValueAsString(bookingDtoUpd))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("approved", "true")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error", is(errorResponse.getError()), String.class));
     }
 
     @SneakyThrows

@@ -12,6 +12,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import ru.practicum.shareit.booking.dto.BookingDtoShort;
+import ru.practicum.shareit.exception.model.ErrorResponse;
+import ru.practicum.shareit.exception.model.WrongUserIdException;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemDtoEnhanced;
@@ -104,6 +106,33 @@ class ItemControllerTest {
                 .andExpect(jsonPath("$.description", is(itemDto.getDescription()), String.class))
                 .andExpect(jsonPath("$.available", is(itemDto.getAvailable()), Boolean.class))
                 .andExpect(jsonPath("$.id", is(itemDto.getId()), Long.class));
+    }
+
+    @SneakyThrows
+    @Test
+    void updateThrowsWrongUserIdException() {
+        ItemDtoForUpdate itemDtoForUpdate = ItemDtoForUpdate.builder()
+                .id(1L)
+                .name("newItemName")
+                .description("newItemDescription")
+                .available(true)
+                .build();
+
+        ErrorResponse errorResponse = new ErrorResponse(String.format(
+                "Пользователь с ID:%d не является владельцем вещи с ID:%d", 1L, itemDtoForUpdate.getId()));
+
+        when(itemService.update(anyLong(), anyLong(), any()))
+                .thenThrow(new WrongUserIdException(String.format(
+                        "Пользователь с ID:%d не является владельцем вещи с ID:%d", 1L, itemDtoForUpdate.getId())));
+
+        mockMvc.perform(MockMvcRequestBuilders.patch("/items/1")
+                        .header("X-Sharer-User-Id", 1L)
+                        .content(mapper.writeValueAsString(itemDtoForUpdate))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error", is(errorResponse.getError()), String.class));
     }
 
     @SneakyThrows
