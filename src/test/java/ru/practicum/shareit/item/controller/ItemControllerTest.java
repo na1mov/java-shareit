@@ -86,6 +86,24 @@ class ItemControllerTest {
 
     @SneakyThrows
     @Test
+    void saveThrowsExceptionIfWrongBody() {
+        ItemDto itemDtoWithNull = ItemDto.builder()
+                .id(1L)
+                .name("itemName")
+                .available(null)
+                .build();
+        when(itemService.save(anyLong(), any())).thenReturn(itemDto);
+        mockMvc.perform(MockMvcRequestBuilders.post("/items")
+                        .header("X-Sharer-User-Id", "1")
+                        .content(mapper.writeValueAsString(itemDtoWithNull))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @SneakyThrows
+    @Test
     void update() {
         ItemDtoForUpdate itemDtoForUpdate = ItemDtoForUpdate.builder()
                 .id(1L)
@@ -111,6 +129,27 @@ class ItemControllerTest {
     @SneakyThrows
     @Test
     void updateThrowsWrongUserIdException() {
+        ItemDtoForUpdate itemDtoForUpdate = ItemDtoForUpdate.builder()
+                .id(1L)
+                .name("newItemName")
+                .description("newItemDescription")
+                .available(true)
+                .build();
+
+        when(itemService.update(anyLong(), anyLong(), any())).thenReturn(itemDto);
+
+        mockMvc.perform(MockMvcRequestBuilders.patch("/items/1")
+                        .header("X-Sharer-User-Id", "NotOk")
+                        .content(mapper.writeValueAsString(itemDtoForUpdate))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @SneakyThrows
+    @Test
+    void updateThrowsExceptionIfWrongId() {
         ItemDtoForUpdate itemDtoForUpdate = ItemDtoForUpdate.builder()
                 .id(1L)
                 .name("newItemName")
