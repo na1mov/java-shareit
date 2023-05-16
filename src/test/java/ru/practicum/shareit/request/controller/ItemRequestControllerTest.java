@@ -100,6 +100,22 @@ class ItemRequestControllerTest {
 
     @SneakyThrows
     @Test
+    void findAllWithAnotherSize() {
+        when(itemRequestService.findAll(anyLong(), any())).thenReturn(List.of(itemRequestDto));
+        mockMvc.perform(MockMvcRequestBuilders.get("/requests/all")
+                        .header("X-Sharer-User-Id", 1L)
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("size", "4")
+                        .param("from", "0")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id", is(itemRequestDto.getId()), Long.class))
+                .andExpect(jsonPath("$[0].description", is(itemRequestDto.getDescription()), String.class));
+    }
+
+    @SneakyThrows
+    @Test
     void findById() {
         when(itemRequestService.findById(anyLong(), anyLong())).thenReturn(itemRequestDto);
         mockMvc.perform(MockMvcRequestBuilders.get("/requests/1")

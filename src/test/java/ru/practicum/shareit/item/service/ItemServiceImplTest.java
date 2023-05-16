@@ -8,6 +8,7 @@ import org.mockito.Mockito;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.BookingStatus;
 import ru.practicum.shareit.booking.repository.BookingRepository;
+import ru.practicum.shareit.exception.model.WrongUserIdException;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemDtoEnhanced;
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
@@ -115,6 +117,65 @@ class ItemServiceImplTest {
         assertEquals(itemDtoUpd.getId(), itemDtoTest.getId());
         assertEquals(itemDtoUpd.getAvailable(), itemDtoTest.getAvailable());
         assertEquals(itemDtoUpd.getDescription(), itemDtoTest.getDescription());
+    }
+
+    @Test
+    void updateWithOnlyNameChange() {
+        User user = new User(1L, "testName", "testEmail@gmail.com");
+        Item item = Item.builder()
+                .id(1L)
+                .name("itemName")
+                .description("itemDescription")
+                .available(true)
+                .owner(user)
+                .build();
+        ItemDtoForUpdate itemDtoForUpdate = ItemDtoForUpdate.builder()
+                .id(1L)
+                .name("itemNameUpd")
+                .build();
+        ItemDto itemDtoUpd = ItemDto.builder()
+                .id(1L)
+                .name("itemNameUpd")
+                .description("itemDescription")
+                .available(true)
+                .build();
+
+        when(itemRepository.findById(any())).thenReturn(Optional.of(item));
+        when(itemRepository.save(any())).thenReturn(itemMapper.itemDtoToItem(itemDtoUpd));
+        ItemDto itemDtoTest = itemService.update(item.getId(), user.getId(), itemDtoForUpdate);
+
+        assertEquals(itemDtoUpd.getName(), itemDtoTest.getName());
+        assertEquals(itemDtoUpd.getId(), itemDtoTest.getId());
+        assertEquals(itemDtoUpd.getAvailable(), itemDtoTest.getAvailable());
+        assertEquals(itemDtoUpd.getDescription(), itemDtoTest.getDescription());
+    }
+
+    @Test
+    void updateWithWrongOwner() {
+        User user = new User(1L, "testName", "testEmail@gmail.com");
+        User userTwo = new User(2L, "testNameTwo", "testEmailTwo@gmail.com");
+        Item item = Item.builder()
+                .id(1L)
+                .name("itemName")
+                .description("itemDescription")
+                .available(true)
+                .owner(userTwo)
+                .build();
+        ItemDtoForUpdate itemDtoForUpdate = ItemDtoForUpdate.builder()
+                .id(1L)
+                .name("itemNameUpd")
+                .build();
+        ItemDto itemDtoUpd = ItemDto.builder()
+                .id(1L)
+                .name("itemNameUpd")
+                .description("itemDescription")
+                .available(true)
+                .build();
+
+        when(itemRepository.findById(any())).thenReturn(Optional.of(item));
+        when(itemRepository.save(any())).thenReturn(itemMapper.itemDtoToItem(itemDtoUpd));
+
+        assertThrows(WrongUserIdException.class, () -> itemService.update(item.getId(), user.getId(), itemDtoForUpdate));
     }
 
     @Test

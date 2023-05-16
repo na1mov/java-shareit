@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import ru.practicum.shareit.exception.model.NotFoundException;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.dto.UserDtoForUpdate;
 import ru.practicum.shareit.user.mapper.UserMapper;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class UserServiceImplTest {
     @Mock
@@ -70,6 +72,44 @@ class UserServiceImplTest {
         assertEquals(user.getId(), updatedUserDtoTest.getId());
         assertEquals(user.getName(), updatedUserDtoTest.getName());
         assertEquals(user.getEmail(), updatedUserDtoTest.getEmail());
+    }
+
+    @Test
+    void updateWithOnlyNameChange() {
+        User user = User.builder()
+                .id(1L)
+                .name("testName")
+                .email("testEmail@gmail.com")
+                .build();
+        UserDtoForUpdate userDtoForUpdate = UserDtoForUpdate.builder()
+                .name("newTestName")
+                .build();
+
+        Mockito.when(userRepository.save(Mockito.any())).thenReturn(user);
+        Mockito.when(userRepository.findById(Mockito.any())).thenReturn(Optional.of(user));
+
+        UserDto updatedUserDtoTest = userService.update(user.getId(), userDtoForUpdate);
+        assertEquals(user.getId(), updatedUserDtoTest.getId());
+        assertEquals(user.getName(), updatedUserDtoTest.getName());
+        assertEquals(user.getEmail(), updatedUserDtoTest.getEmail());
+    }
+
+    @Test
+    void updateWithWrongUserId() {
+        User user = User.builder()
+                .id(1L)
+                .name("testName")
+                .email("testEmail@gmail.com")
+                .build();
+        UserDtoForUpdate userDtoForUpdate = UserDtoForUpdate.builder()
+                .name("newTestName")
+                .email("newTestEmail@gmail.com")
+                .build();
+
+        Mockito.when(userRepository.save(Mockito.any())).thenReturn(user);
+        Mockito.when(userRepository.findById(-1L)).thenReturn(Optional.of(user));
+
+        assertThrows(NotFoundException.class, () -> userService.update(user.getId(), userDtoForUpdate));
     }
 
     @Test

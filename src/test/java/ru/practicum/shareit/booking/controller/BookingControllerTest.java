@@ -196,6 +196,27 @@ class BookingControllerTest {
 
     @SneakyThrows
     @Test
+    void findAllByStateWithAnotherSize() {
+        when(bookingService.findAllByState(any(), anyLong(), any())).thenReturn(List.of(bookingDto));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/bookings")
+                        .header("X-Sharer-User-Id", 1L)
+                        .content(mapper.writeValueAsString(bookingRequest))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("size", "5")
+                        .param("from", "0")
+                        .param("state", "ALL")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id", is(bookingDto.getId()), Long.class))
+                .andExpect(jsonPath("$[0].item.id", is(bookingDto.getItem().getId()), Long.class))
+                .andExpect(jsonPath("$[0].booker.id", is(bookingDto.getBooker().getId()), Long.class))
+                .andExpect(jsonPath("$[0].status", is(bookingDto.getStatus().toString()), String.class));
+    }
+
+    @SneakyThrows
+    @Test
     void findAllByOwner() {
         when(bookingService.findAllByOwner(any(), anyLong(), any())).thenReturn(List.of(bookingDto));
         mockMvc.perform(MockMvcRequestBuilders.get("/bookings/owner")

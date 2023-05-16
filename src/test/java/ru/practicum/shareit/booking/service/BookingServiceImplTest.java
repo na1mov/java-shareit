@@ -83,6 +83,7 @@ class BookingServiceImplTest {
                 .status(BookingStatus.WAITING)
                 .build();
 
+        bookingMapper.bookingToBookingDto(null);
         when(userRepository.findById(any())).thenReturn(Optional.of(userTwo));
         when(itemRepository.findById(any())).thenReturn(Optional.of(item));
         when(bookingRepository.save(any())).thenReturn(booking);
@@ -166,7 +167,6 @@ class BookingServiceImplTest {
 
     @Test
     void updateThrowsNotFoundIfUserIsNotOwner() {
-        User userOne = new User(1L, "testNameOne", "testEmailOne@gmail.com");
         User userTwo = new User(2L, "testNameTwo", "testEmailTwo@gmail.com");
         Booking booking = Booking.builder()
                 .id(1L)
@@ -211,6 +211,43 @@ class BookingServiceImplTest {
         assertEquals(bookingRequest.getItemId(), bookingDto.getItem().getId());
         assertEquals(bookingRequest.getEnd().format(formatter), bookingDto.getEnd().format(formatter));
         assertEquals(bookingRequest.getStart().format(formatter), bookingDto.getStart().format(formatter));
+    }
+
+    @Test
+    void findByIdAndUserIdWithWrongBookingId() {
+        User userOne = new User(1L, "testNameOne", "testEmailOne@gmail.com");
+        User userTwo = new User(2L, "testNameTwo", "testEmailTwo@gmail.com");
+        Item item = new Item(1L, "itemName", "itemDescription", true, userOne, null);
+        Booking booking = Booking.builder()
+                .id(item.getId())
+                .start(LocalDateTime.now().plusMinutes(8))
+                .end(LocalDateTime.now().plusMinutes(16))
+                .item(item)
+                .booker(userTwo)
+                .status(BookingStatus.WAITING)
+                .build();
+
+        when(bookingRepository.findById(-1L)).thenReturn(Optional.ofNullable(booking));
+
+        assertThrows(NotFoundException.class, () -> bookingService.findByIdAndUserId(1L, 1L));
+    }
+
+    @Test
+    void findByIdAndUserIdWithWrongOwner() {
+        User userTwo = new User(2L, "testNameTwo", "testEmailTwo@gmail.com");
+        Item item = new Item(1L, "itemName", "itemDescription", true, userTwo, null);
+        Booking booking = Booking.builder()
+                .id(item.getId())
+                .start(LocalDateTime.now().plusMinutes(8))
+                .end(LocalDateTime.now().plusMinutes(16))
+                .item(item)
+                .booker(userTwo)
+                .status(BookingStatus.WAITING)
+                .build();
+
+        when(bookingRepository.findById(any())).thenReturn(Optional.ofNullable(booking));
+
+        assertThrows(NotFoundException.class, () -> bookingService.findByIdAndUserId(1L, 1L));
     }
 
     @Test
