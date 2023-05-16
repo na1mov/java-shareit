@@ -216,13 +216,47 @@ class ItemControllerTest {
     @SneakyThrows
     @Test
     void findByUserId() {
-        when(itemService.findByUserId(anyLong())).thenReturn(List.of(itemDtoEnhanced));
+        when(itemService.findByUserId(anyLong(), any())).thenReturn(List.of(itemDtoEnhanced));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/items")
                         .header("X-Sharer-User-Id", 1L)
                         .content(mapper.writeValueAsString(itemDto))
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
+                        .param("size", "4")
+                        .param("from", "2")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id", is(itemDto.getId()), Long.class))
+                .andExpect(jsonPath("$[0].name", is(itemDto.getName()), String.class))
+                .andExpect(jsonPath("$[0].description", is(itemDto.getDescription()), String.class))
+                .andExpect(jsonPath("$[0].available", is(itemDto.getAvailable()), Boolean.class))
+                .andExpect(jsonPath("$[0].lastBooking.id",
+                        is(itemDtoEnhanced.getLastBooking().getId().intValue())))
+                .andExpect(jsonPath("$[0].lastBooking.bookerId",
+                        is(itemDtoEnhanced.getLastBooking().getBookerId().intValue())))
+                .andExpect(jsonPath("$[0].nextBooking.id",
+                        is(itemDtoEnhanced.getNextBooking().getId().intValue())))
+                .andExpect(jsonPath("$[0].nextBooking.bookerId",
+                        is(itemDtoEnhanced.getNextBooking().getBookerId().intValue())))
+                .andExpect(jsonPath("$[0].comments[0].id",
+                        is(itemDtoEnhanced.getComments().get(0).getId().intValue())))
+                .andExpect(jsonPath("$[0].comments[0].text",
+                        is(itemDtoEnhanced.getComments().get(0).getText())));
+    }
+
+    @SneakyThrows
+    @Test
+    void findByUserIdWithAnotherSize() {
+        when(itemService.findByUserId(anyLong(), any())).thenReturn(List.of(itemDtoEnhanced));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/items")
+                        .header("X-Sharer-User-Id", 1L)
+                        .content(mapper.writeValueAsString(itemDto))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("size", "4")
+                        .param("from", "0")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id", is(itemDto.getId()), Long.class))
@@ -246,7 +280,7 @@ class ItemControllerTest {
     @SneakyThrows
     @Test
     void findByWord() {
-        when(itemService.findByWord(anyString())).thenReturn(List.of(itemDto));
+        when(itemService.findByWord(anyString(), any())).thenReturn(List.of(itemDto));
         mockMvc.perform(MockMvcRequestBuilders.get("/items/search")
                         .header("X-Sharer-User-Id", 1L)
                         .content(mapper.writeValueAsString(itemDto))

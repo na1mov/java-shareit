@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.springframework.data.domain.Pageable;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.BookingStatus;
 import ru.practicum.shareit.booking.repository.BookingRepository;
@@ -226,10 +227,10 @@ class ItemServiceImplTest {
                 .owner(user)
                 .build();
 
-        when(itemRepository.findAllByOwnerIdOrderByIdAsc(any())).thenReturn(List.of(item));
+        when(itemRepository.findAllByOwnerIdOrderByIdAsc(any(), any())).thenReturn(List.of(item));
         when(userService.findById(any())).thenReturn(userMapper.userToUserDto(user));
         when(itemRepository.findById(any())).thenReturn(Optional.of(item));
-        List<ItemDtoEnhanced> ideList = itemService.findByUserId(user.getId());
+        List<ItemDtoEnhanced> ideList = itemService.findByUserId(user.getId(), Pageable.ofSize(10));
 
         assertEquals(1, ideList.size());
         assertEquals(item.getId(), ideList.get(0).getId());
@@ -249,8 +250,8 @@ class ItemServiceImplTest {
                 .owner(user)
                 .build();
 
-        when(itemRepository.findByWord(anyString())).thenReturn(List.of(item));
-        List<ItemDto> itemList = itemService.findByWord("TEMNA");
+        when(itemRepository.findByWord(anyString(), any())).thenReturn(List.of(item));
+        List<ItemDto> itemList = itemService.findByWord("TEMNA", Pageable.ofSize(10));
 
         assertEquals(1, itemList.size());
         assertEquals(item.getId(), itemList.get(0).getId());
