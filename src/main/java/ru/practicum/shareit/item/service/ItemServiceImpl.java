@@ -2,6 +2,7 @@ package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -121,10 +122,10 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<ItemDtoEnhanced> findByUserId(Long userId) {
+    public List<ItemDtoEnhanced> findByUserId(Long userId, Pageable pageable) {
         log.info(String.format("Поиск всех вещей пользователя с ID:%d", userId));
         userService.findById(userId);
-        List<Item> itemList = itemRepository.findAllByOwnerIdOrderByIdAsc(userId);
+        List<Item> itemList = itemRepository.findAllByOwnerIdOrderByIdAsc(userId, pageable);
 
         List<ItemDtoEnhanced> itemDtoEnhancedList = itemList.stream()
                 .map(itemMapper::itemToItemDtoEnhanced)
@@ -154,12 +155,12 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<ItemDto> findByWord(String word) {
+    public List<ItemDto> findByWord(String word, Pageable pageable) {
         log.info(String.format("Поиск вещи по запросу:%s", word));
         if (word.isBlank()) {
             return new ArrayList<>();
         }
-        return itemRepository.findByWord(word).stream()
+        return itemRepository.findByWord(word, pageable).stream()
                 .map(itemMapper::itemToItemDto)
                 .collect(Collectors.toList());
     }
@@ -188,8 +189,7 @@ public class ItemServiceImpl implements ItemService {
         Optional<BookingDtoShort> bookingDtoShort = Optional.empty();
         if (itemIdToListBooking.containsKey(itemDtoEnhancedId)) {
             bookingDtoShort = itemIdToListBooking.get(itemDtoEnhancedId).stream()
-                    .map(BookingMapperShort::bookingToBookingDtoShort)
-                    .findFirst();
+                    .map(BookingMapperShort::bookingToBookingDtoShort).findFirst();
         }
         return bookingDtoShort.orElse(null);
     }
@@ -197,8 +197,7 @@ public class ItemServiceImpl implements ItemService {
     private List<CommentDto> getCommentDto(Long itemDtoEnhancedId, Map<Long, List<Comment>> itemIdToListComments) {
         if (itemIdToListComments.containsKey(itemDtoEnhancedId)) {
             return itemIdToListComments.getOrDefault(itemDtoEnhancedId, null).stream()
-                    .map(CommentMapper::commentToCommentDto)
-                    .collect(Collectors.toList());
+                    .map(CommentMapper::commentToCommentDto).collect(Collectors.toList());
         }
         return new ArrayList<>();
     }

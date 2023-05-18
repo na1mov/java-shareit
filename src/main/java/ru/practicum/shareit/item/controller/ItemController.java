@@ -1,6 +1,7 @@
 package ru.practicum.shareit.item.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
@@ -9,6 +10,8 @@ import ru.practicum.shareit.item.dto.ItemDtoForUpdate;
 import ru.practicum.shareit.item.service.ItemService;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 
@@ -41,13 +44,17 @@ public class ItemController {
     }
 
     @GetMapping
-    public List<ItemDtoEnhanced> findByUserId(@RequestHeader(name = "X-Sharer-User-Id") long userId) {
-        return itemService.findByUserId(userId);
+    public List<ItemDtoEnhanced> findByUserId(@RequestHeader(name = "X-Sharer-User-Id") long userId,
+                                              @PositiveOrZero @RequestParam(defaultValue = "0") Integer from,
+                                              @Positive @RequestParam(defaultValue = "10") Integer size) {
+        return itemService.findByUserId(userId, PageRequest.of((from == 0 ? 0 : (from / size)), size));
     }
 
     @GetMapping("/search")
-    public List<ItemDto> findByWord(@RequestParam(required = false) String text) {
-        return itemService.findByWord(text);
+    public List<ItemDto> findByWord(@RequestParam(required = false) String text,
+                                    @PositiveOrZero @RequestParam(defaultValue = "0") Integer from,
+                                    @Positive @RequestParam(defaultValue = "10") Integer size) {
+        return itemService.findByWord(text, PageRequest.of((from == 0 ? 0 : (from / size)), size));
     }
 
     @PostMapping("/{itemId}/comment")
